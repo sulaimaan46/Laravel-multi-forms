@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Forms\Form;
+use Illuminate\Support\Facades\Session;
 
 class FormBuilderService
 {
@@ -12,12 +13,12 @@ class FormBuilderService
     public function createFormSimpleBuilder($entity, $formClass, $view, $actionUrl, $redirectTo = null, $message = null, callable $afterInsert = null)
     {
         $request = request();
-        dd($request);
         try {
-
             $form = app()->make($formClass)->createForm($entity);
             if ($request->method() == 'POST' || $request->method() == 'PUT') {
+                dd($entity);
                 $form->requestHandler($entity);
+                dd($form);
                 $form->save();
                 if ($request->ajax()) {
                     $response = [

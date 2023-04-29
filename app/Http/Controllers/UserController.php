@@ -2,10 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Forms\UserForm;
+use App\Models\User;
+use App\Services\FormBuilderService;
+use App\Services\FormFactoryService;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
+    public $formFactoryService;
+    public $formBuilderService;
+
+    public function __construct(FormBuilderService $formBuilderService , FormFactoryService $formFactoryService)
+    {
+        $this->formBuilderService = $formBuilderService;
+        $this->formFactoryService = $formFactoryService;
+
+    }
     /**
      * Display a listing of the resource.
      *
@@ -13,7 +26,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        //
+        return view('users.list');
     }
 
     /**
@@ -21,64 +34,46 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(User $user)
     {
-        //
+        $entity = $this->formFactoryService->createUser($user);
+        return $this->process($entity, $user);
+    }
+    public function edit(user $user)
+    {
+
+        $entity = $this->formFactoryService->createUser($user);
+        return $this->process($entity, $user);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    public function store(user $user)
     {
-        //
+        $entity = $this->formFactoryService->createUser($user);
+        return $this->process($entity, $user);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
+    public function update(user $user)
     {
-        //
+        $entity = $this->formFactoryService->createUser($user);
+        return $this->process($entity, $user);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
+    public function destroy(user $user)
     {
-        //
+        $user->delete();
+        dd("deleted");
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+    public function process(User $entity, user $user)
     {
-        //
-    }
+        if ($entity->isNew()) {
+            $actionUrl = route('users.store', ['user' => $user]);
+            $message   = "User Added";
+        } else {
+            $actionUrl = route('users.update', ['user' => $user]);
+            $message   = "User Updated";
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
+        return $this->formBuilderService->createFormSimpleBuilder($entity, UserForm::class, 'users/form', $actionUrl, null, $message,null );
     }
 }

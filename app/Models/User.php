@@ -41,4 +41,8 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function isNew($user = null){
+        return isset($this->users) && $this->users !== "" ? false : true;  
+    }
 }
