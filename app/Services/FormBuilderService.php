@@ -16,9 +16,7 @@ class FormBuilderService
         try {
             $form = app()->make($formClass)->createForm($entity);
             if ($request->method() == 'POST' || $request->method() == 'PUT') {
-                dd($entity);
                 $form->requestHandler($entity);
-                dd($form);
                 $form->save();
                 if ($request->ajax()) {
                     $response = [

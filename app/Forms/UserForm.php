@@ -21,7 +21,10 @@ class UserForm extends Form
         // }
         $this->add(self::TEXT,'name');
 
-        // $this->add(self::EMAIL, 'email', ['required' => true]);
+        $this->add(self::EMAIL, 'email');
+
+        $this->add(self::TEXT, 'password');
+
         return $this;
     }
 }

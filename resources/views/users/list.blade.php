@@ -22,7 +22,7 @@
             <div class="card-body">
                 <div class="row">
 
-                @include('users.form')
+                <!-- @include('users.form') -->
                 </div>
             </div>
         </div>
@@ -87,6 +87,40 @@
                         if(response.status && response.html){
                             $('.form-input-body').html('')
                             $('.form-input-body').html(response.html)
+                        }
+                },
+                error: function(xhr, status, error) {
+                // Handle errors
+                $('#element-container').append('<div class="alert alert-danger">' + error + '</div>');
+                }
+            });
+      });
+
+        $(document).on('click','#sumbit_btn',function(){
+          var data = $('#user_form :input');
+
+          // not sure if you wanted this, but I thought I'd add it.
+          // get an associative array of just the values.
+          var values = {};
+          data.each(function() {
+              values[this.name] = $(this).val();
+          });
+          console.log(values);
+            // Submit form data via AJAX
+            $.ajax({
+                url: "{{route('users.store')}}", // Replace with your server-side script URL
+                type: 'POST',
+                data:$('#user_form').serialize(),
+                headers: {
+                    'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                },
+                
+                success: function(response) {
+                // Add new element to container
+                console.log(response);
+                        if(response.status && response.html){
+                            $('.form-input-body').html('')
+                            $('#myModal').hide()
                         }
                 },
                 error: function(xhr, status, error) {

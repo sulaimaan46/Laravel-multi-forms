@@ -3,8 +3,8 @@
 namespace App\Forms;
 
 use App\Forms\FormEntity;
+use App\View\Components\Form\Email;
 use App\View\Components\Form\Text;
-use App\View\Components\Forms\Email;
 use App\View\Components\Forms\PhoneNumber;
 use App\View\Components\Forms\SingleCheckbox;
 use App\View\Components\Forms\TextArea;
@@ -164,18 +164,18 @@ class Form
                         }
 
                         break;
-                    // case self::EMAIL:
-                    //     $fieldEntity->placeHolder = $field->placeHolder;
+                    case self::EMAIL:
+                        // $fieldEntity->placeHolder = $field->placeHolder;
 
-                    //     $fieldRender = new Email($fieldEntity->name, $fieldEntity->value , $fieldEntity->class);
-                    //     $view        = $fieldRender->render()->with($fieldRender->data());
+                        $fieldRender = new Email($fieldEntity->name, $fieldEntity->value , $fieldEntity->class);
+                        $view        = $fieldRender->render()->with($fieldRender->data());
 
-                    //     if ($form->fields->has($fieldEntity->name)) {
-                    //         $fieldObject       = $form->fields->get($fieldEntity->name);
-                    //         $fieldObject->view = $view;
-                    //     }
+                        if ($form->fields->has($fieldEntity->name)) {
+                            $fieldObject       = $form->fields->get($fieldEntity->name);
+                            $fieldObject->view = $view;
+                        }
 
-                    //     break;
+                        break;
                     
                 }
             }
@@ -188,18 +188,75 @@ class Form
     {
 
         $request = request()->all();
-        $this->requestHandlerCore($this, $entity, $request);
+        $this->simpleRequestHandleCore($this, $entity, $request);
 
+    }
+
+    public function simpleRequestHandleCore($form, $entity, $request){
+        foreach ($form->fields as $field) {
+                $name = $field->keyName;
+                switch ($field->type) {
+                    case self::TEXT:
+                    case self::EMAIL:
+                        $entity->{$name} = Arr::get($request, $name);
+                        break;
+                    // case self::DROP_DOWN:
+                    //     $this->dropdownDecodeValues($entity,$request,$name);
+                    //     break;
+                    // case self::TEXT_AREA:
+                    // case self::PHONE:
+                    // case self::ZIP_CODE:
+                    // case self::CHECK_BOX:
+
+                    //     $entity->{$name} = Arr::get($request, $name);
+                    //     break;
+                }
+        }
+
+        $form->model = $entity;
+        return $entity;
     }
 
     public function requestHandlerCore($form, $entity, $request)
     {
-        $name = $field->name;
-        switch ($field->type) {
-            case self::TEXT:
-            case self::EMAIL:
-                $entity->{$name} = Arr::get($request, $name);
-                break;
+        foreach ($form->fields as $field) {
+            if ($field instanceof self) {
+
+                //** Add the model in update mode */
+                $childModel  = strtolower(str::snake($field->modelName));
+                $childEntity = $entity->{$childModel};
+
+                if ($entity && $entity->id) {
+                    $childEntity = $entity->{$childModel};
+                } else {
+                    $childEntity = new $field->modelPath; //! need  to use form factory
+                }
+
+                $request = request()->all();
+                $request = $this->multiKeyExists($request, $field->modelName);
+                if ($request) {
+                    $this->requestHandlerCore($field, $childEntity, $request);
+                }
+
+            } else {
+                $name = $field->keyName;
+                switch ($field->type) {
+                    case self::TEXT:
+                    case self::EMAIL:
+                        $entity->{$name} = Arr::get($request, $name);
+                        break;
+                    // case self::DROP_DOWN:
+                    //     $this->dropdownDecodeValues($entity,$request,$name);
+                    //     break;
+                    // case self::TEXT_AREA:
+                    // case self::PHONE:
+                    // case self::ZIP_CODE:
+                    // case self::CHECK_BOX:
+
+                    //     $entity->{$name} = Arr::get($request, $name);
+                    //     break;
+                }
+            }
         }
 
         $form->model = $entity;
@@ -217,21 +274,21 @@ class Form
     //     return $entity;
     // }
 
-    // public function multiKeyExists(array $array, $key)
-    // {
-    //     if (array_key_exists($key, $array)) {
-    //         return $array[$key];
-    //     }
-    //     foreach ($array as $k => $v) {
-    //         if (!is_array($v)) {
-    //             continue;
-    //         }
-    //         if (array_key_exists($key, $v)) {
-    //             return $v[$key];
-    //         }
-    //     }
-    //     return false;
-    // }
+    public function multiKeyExists(array $array, $key)
+    {
+        if (array_key_exists($key, $array)) {
+            return $array[$key];
+        }
+        foreach ($array as $k => $v) {
+            if (!is_array($v)) {
+                continue;
+            }
+            if (array_key_exists($key, $v)) {
+                return $v[$key];
+            }
+        }
+        return false;
+    }
 
     public function save()
     {
@@ -246,12 +303,12 @@ class Form
                 $form->model->save();
             }
 
-            foreach ($form->fields as $field) {
-                if ($field instanceof self) {
-                    $this->saveCore($field, $form);
-                }
-
+        foreach ($form->fields as $field) {
+            if ($field instanceof self) {
+                $this->saveCore($field, $form);
             }
+
+        }
 
     }
 
